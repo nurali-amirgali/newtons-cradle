@@ -4,13 +4,13 @@ import math
 
 WIDTH = 800
 HEIGHT = 600
-FPS = 60
+FPS = 120
 
-BG_COLOR = (30,30,30)
+BG_COLOR = (237, 235, 240)
 
 pygame.init()
 
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
+screen = pygame.display.set_mode((WIDTH, HEIGHT), vsync=1)
 pygame.display.set_caption("newtons cradle")
 
 clock = pygame.time.Clock()
@@ -38,22 +38,31 @@ class pendulum:
         self.ropeWidth = ropeWidth
         self.radius = radius
         self.length = length
+        self.period = 1.5 #the time it takes to complete one full swing
         self.mass = mass
         
-        self.angle = 0
-        self.angularMomentum = 0
+        self.angle = math.radians(-95) #stored in radians
+        self.angularVelocity = 0
+        self.angularAcceleration = 0
+        self.friction = 0.1
+        self.gravity = length * (2 * math.pi / self.period) ** 2
     
     def render(self):
-        ballPos = getPoint((self.x, self.y), self.angle + 90, self.length)
+        ballPos = getPoint((self.x, self.y), math.degrees(self.angle) + 90, self.length)
         pygame.draw.line(self.screen, ROPE_COLOR, (self.x, self.y), ballPos, self.ropeWidth)
         pygame.draw.circle(self.screen, PIVOT_COLOR, (self.x, self.y), self.pivotRadius)
         pygame.draw.circle(self.screen, BALL_COLOR, ballPos, self.radius)
+        
+    def update(self, dt):
+        self.angularAcceleration = -(self.gravity / self.length) * math.sin(self.angle) - self.friction * self.angularVelocity
+        self.angularVelocity += self.angularAcceleration * dt
+        self.angle += self.angularVelocity * dt
 
 testPendulum = pendulum(WIDTH/2, HEIGHT * 0.2, screen)
 
 running = True
 while running:
-    clock.tick(FPS)
+    dt = clock.tick(FPS)/1000
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -62,6 +71,7 @@ while running:
     screen.fill(BG_COLOR)
     
     testPendulum.render()
+    testPendulum.update(dt)
     
     pygame.display.flip()
 
