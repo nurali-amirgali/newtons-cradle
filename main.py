@@ -100,8 +100,9 @@ class newtonsCradle:
                 for i, pendulumObj in enumerate(self.pendulums):
                     ballPos = pendulumObj.getBallPos()
                     distance = math.dist(ballPos, (x, y))
+                    extraDistance = min(math.degrees(pendulumObj.angularVelocity) * 20, 60)
                     
-                    if distance <= self.radius:
+                    if distance <= self.radius + extraDistance:
                         print("startDrag")     
                         self.startDrag()
                         self.dragIndex = i
@@ -202,6 +203,7 @@ numBalls = 7
 ballRadius = 20
 testPendulum = newtonsCradle(WIDTH/2 - (ballRadius * numBalls * 2)/2 + ballRadius, HEIGHT * 0.3, screen, numPendulums = numBalls, radius = ballRadius)
 
+paused = False
 running = True
 while running:
     dt = clock.tick(FPS)/1000
@@ -209,11 +211,20 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
+            elif event.key == pygame.K_p:
+                paused = not paused
+            elif event.key == pygame.K_r:
+                paused = False
+                testPendulum = newtonsCradle(WIDTH/2 - (ballRadius * numBalls * 2)/2 + ballRadius, HEIGHT * 0.3, screen, numPendulums = numBalls, radius = ballRadius)
       
     screen.fill(BG_COLOR)
     
     testPendulum.render()
-    testPendulum.update(dt)
+    if not paused:
+        testPendulum.update(dt)
     
     pygame.display.flip()
 
