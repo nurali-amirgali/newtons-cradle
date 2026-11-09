@@ -24,6 +24,10 @@ def getPoint(start, direction, length):
 
     return (new_x, new_y)
 
+def isCircleColliding(pointA, radiusA, pointB, radiusB):
+    distance = math.dist(pointA, pointB)
+    return distance <= radiusA + radiusB
+
 PIVOT_COLOR = (83, 81, 87)
 ROPE_COLOR = (175, 172, 181)
 BALL_COLOR = (49, 48, 51)
@@ -46,6 +50,7 @@ class newtonsCradle:
         self.ropeWidth = ropeWidth
         
         self.initPendulums()
+        self.pendulums[-1].angle = math.radians(-95)
     
     def initPendulums(self):
         for i in range(self.numPendulums):
@@ -57,12 +62,14 @@ class newtonsCradle:
     def update(self, dt):
         for pendulumObj in self.pendulums:
             pendulumObj.update(dt)
+        collisions = self.collisionCheck()
     
     def render(self):
         for pendulumObj in self.pendulums:
             pendulumObj.render()
             
     def collisionCheck(self):
+        collisions = []
         for i in range(self.numPendulums - 1):
             current = self.pendulums[i]
             next = self.pendulums[i + 1]
@@ -70,7 +77,11 @@ class newtonsCradle:
             currentPos = getPoint((current.x, current.y), math.degrees(current.angle) + 90, current.length)
             nextPos = getPoint((next.x, next.y), math.degrees(next.angle) + 90, next.length)
             
-            
+            if isCircleColliding(currentPos, self.radius, nextPos, self.radius):
+                distance = math.dist(currentPos, nextPos)
+                overlap = (self.radius * 2) - distance
+                collisions.append((i, i + 1, overlap))
+        return collisions
 
 class pendulum:
     def __init__(self, x, y, screen, radius = 20, length = 150, mass = 10, pivotRadius = 10, ropeWidth = 10, period = 1.5):
