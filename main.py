@@ -5,7 +5,7 @@ import random
 
 WIDTH = 600
 HEIGHT = 400
-FPS = 120
+FPS = 60
 
 BG_COLOR = (40, 40, 40)
 PIVOT_COLOR = (122, 121, 115)
