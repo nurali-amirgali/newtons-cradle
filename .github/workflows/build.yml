@@ -1,0 +1,81 @@
+name: Build Executables
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            artifact: dist/newtonsCradle-linux.tar.gz
+          - os: windows-latest
+            platform: windows
+            artifact: dist/newtonsCradle-windows.exe
+          - os: macos-latest
+            platform: macos
+            artifact: dist/newtonsCradle-macos.zip
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller pillow
+
+      - name: Build (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          pyinstaller --onefile --name newtonsCradle main.py
+          tar -czf dist/newtonsCradle-linux.tar.gz -C dist newtonsCradle
+
+      - name: Build (Windows)
+        if: matrix.platform == 'windows'
+        run: |
+          pyinstaller --onefile --windowed --name newtonsCradle --icon icon.png main.py
+          mv dist/newtonsCradle.exe dist/newtonsCradle-windows.exe
+
+      - name: Build (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          pyinstaller --windowed --name newtonsCradle --icon icon.png main.py
+          ditto -c -k --keepParent dist/newtonsCradle.app dist/newtonsCradle-macos.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: newtonsCradle-${{ matrix.platform }}
+          path: ${{ matrix.artifact }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: newtonsCradle-*
+          merge-multiple: true
+          path: release
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: release/*

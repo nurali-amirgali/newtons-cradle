@@ -102,13 +102,11 @@ class newtonsCradle:
                     distance = math.dist(ballPos, (x, y))
                     extraDistance = min(math.degrees(pendulumObj.angularVelocity) * 20, 60)
                     
-                    if distance <= self.radius + extraDistance:
-                        print("startDrag")     
+                    if distance <= self.radius + extraDistance: 
                         self.startDrag()
                         self.dragIndex = i
                         break
             else:
-                print("endDrag")
                 self.endDrag()
             
         self.lastMouseState = mouseButtons[0]
