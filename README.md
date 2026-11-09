@@ -7,7 +7,7 @@ A simple fun 2d newtons cradle simulator built in pygame.
 This is a fun simple 2d newtons cradle simulator that allows you to play around with it by dragging the balls. 
 
 ## How To Install
-1. go to the releases page [HERE](example.com)
+1. go to the releases page [HERE](https://github.com/nurali-amirgali/newtons-cradle/releases/tag/v1.0)
 2. download the executable for your specific operating system
 3. run it 
 4. depending on the os the anti virus may block the application from running because its unsigned. if that happens click "more info" and then "run away"
