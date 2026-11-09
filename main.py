@@ -224,6 +224,20 @@ while running:
     if not paused:
         testPendulum.update(dt)
     
+    if paused:
+        pauseWidth = 10
+        topPadding = 12
+        pauseHeight = 30
+        pauseSpacing = 8
+        rightPadding = 12
+        
+        barRightX = WIDTH - pauseWidth - rightPadding
+        barLeftX = barRightX - pauseWidth - pauseSpacing
+        y = topPadding
+        
+        pygame.draw.rect(screen, (255,255,255), (barLeftX, y, pauseWidth, pauseHeight))
+        pygame.draw.rect(screen, (255,255,255), (barRightX, y, pauseWidth, pauseHeight))
+    
     pygame.display.flip()
 
 pygame.quit()
