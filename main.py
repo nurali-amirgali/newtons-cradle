@@ -2,8 +2,8 @@ import pygame
 import sys
 import math
 
-WIDTH = 800
-HEIGHT = 600
+WIDTH = 600
+HEIGHT = 400
 FPS = 120
 
 BG_COLOR = (237, 235, 240)
@@ -50,11 +50,13 @@ class newtonsCradle:
         self.ropeWidth = ropeWidth
         
         self.collisionIterations = 10
-        self.restitution = 1
-        
+        self.restitution = 0.999
+    
         self.initPendulums()
-        self.pendulums[-1].angle = math.radians(-95)
-        self.pendulums[0].angle = math.radians(35)
+        #self.pendulums[-1].angle = math.radians(-40)
+        #self.pendulums[0].angle = math.radians(35)
+        #self.pendulums[1].angle = math.radians(25)
+        #self.pendulums[2].angle = math.radians(15)
     
     def initPendulums(self):
         for i in range(self.numPendulums):
@@ -132,7 +134,9 @@ class pendulum:
         self.angularVelocity += self.angularAcceleration * dt
         self.angle += self.angularVelocity * dt
 
-testPendulum = newtonsCradle(WIDTH/2, HEIGHT * 0.2, screen)
+numBalls = 7
+ballRadius = 20
+testPendulum = newtonsCradle(WIDTH/2 - (ballRadius * numBalls * 2)/2 + ballRadius, HEIGHT * 0.3, screen, numPendulums = numBalls, radius = ballRadius)
 
 running = True
 while running:
