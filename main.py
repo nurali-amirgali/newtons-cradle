@@ -28,8 +28,52 @@ PIVOT_COLOR = (83, 81, 87)
 ROPE_COLOR = (175, 172, 181)
 BALL_COLOR = (49, 48, 51)
 
+class newtonsCradle:
+    def __init__(self, x, y, screen, numPendulums = 7, radius = 20, length = 150, 
+                 mass = 10, period = 1.5, pivotRadius = 10, ropeWidth = 10):
+        self.x = x
+        self.y = y
+        self.screen = screen
+        self.numPendulums = 7
+        self.pendulums = []
+        
+        self.numPendulums = numPendulums
+        self.radius = radius
+        self.length = length
+        self.mass = mass
+        self.period = period
+        self.pivotRadius = pivotRadius
+        self.ropeWidth = ropeWidth
+        
+        self.initPendulums()
+    
+    def initPendulums(self):
+        for i in range(self.numPendulums):
+            x = self.x + (i * self.radius * 2)
+            newPendulum = pendulum(x, self.y, self.screen, self.radius, self.length, 
+                                   self.mass, self.pivotRadius, self.ropeWidth, self.period)
+            self.pendulums.append(newPendulum)
+    
+    def update(self, dt):
+        for pendulumObj in self.pendulums:
+            pendulumObj.update(dt)
+    
+    def render(self):
+        for pendulumObj in self.pendulums:
+            pendulumObj.render()
+            
+    def collisionCheck(self):
+        for i in range(self.numPendulums - 1):
+            current = self.pendulums[i]
+            next = self.pendulums[i + 1]
+            
+            currentPos = getPoint((current.x, current.y), math.degrees(current.angle) + 90, current.length)
+            nextPos = getPoint((next.x, next.y), math.degrees(next.angle) + 90, next.length)
+            
+            
+
 class pendulum:
-    def __init__(self, x, y, screen, radius = 20, length = 150, mass = 10, pivotRadius = 10, ropeWidth = 10):
+    def __init__(self, x, y, screen, radius = 20, length = 150, mass = 10, pivotRadius = 10, ropeWidth = 10, period = 1.5):
         self.x = x
         self.y = y
         self.screen = screen
@@ -38,10 +82,10 @@ class pendulum:
         self.ropeWidth = ropeWidth
         self.radius = radius
         self.length = length
-        self.period = 1.5 #the time it takes to complete one full swing
+        self.period = period #the time it takes to complete one full swing
         self.mass = mass
         
-        self.angle = math.radians(-95) #stored in radians
+        self.angle = 0 #stored in radians
         self.angularVelocity = 0
         self.angularAcceleration = 0
         self.friction = 0.1
@@ -58,7 +102,7 @@ class pendulum:
         self.angularVelocity += self.angularAcceleration * dt
         self.angle += self.angularVelocity * dt
 
-testPendulum = pendulum(WIDTH/2, HEIGHT * 0.2, screen)
+testPendulum = newtonsCradle(WIDTH/2, HEIGHT * 0.2, screen)
 
 running = True
 while running:
