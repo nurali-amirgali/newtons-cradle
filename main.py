@@ -6,7 +6,11 @@ WIDTH = 600
 HEIGHT = 400
 FPS = 120
 
-BG_COLOR = (237, 235, 240)
+BG_COLOR = (40, 40, 40) #(237, 235, 240)
+PIVOT_COLOR = (122, 121, 115) #83, 81, 87
+ROPE_COLOR = (255,255,255) #175, 172, 181
+BALL_COLOR = (255,255,255) #49, 48, 51
+BALL_OUTLINE = (0,0,0)
 
 pygame.init()
 
@@ -28,13 +32,9 @@ def isCircleColliding(pointA, radiusA, pointB, radiusB):
     distance = math.dist(pointA, pointB)
     return distance <= radiusA + radiusB
 
-PIVOT_COLOR = (83, 81, 87)
-ROPE_COLOR = (175, 172, 181)
-BALL_COLOR = (49, 48, 51)
-
 class newtonsCradle:
     def __init__(self, x, y, screen, numPendulums = 7, radius = 20, length = 150, 
-                 mass = 10, period = 1.5, pivotRadius = 10, ropeWidth = 10):
+                 mass = 10, period = 1.5, pivotRadius = 10, ropeWidth = 13):
         self.x = x
         self.y = y
         self.screen = screen
@@ -49,8 +49,13 @@ class newtonsCradle:
         self.pivotRadius = pivotRadius
         self.ropeWidth = ropeWidth
         
-        self.collisionIterations = 10
+        self.collisionIterations = 3
         self.restitution = 0.999
+        
+        self.lastMouseState = False
+        self.lastMousePos = (0,0)
+        self.dragging = False
+        self.dragIndex = 0
     
         self.initPendulums()
         #self.pendulums[-1].angle = math.radians(-40)
@@ -66,13 +71,59 @@ class newtonsCradle:
             self.pendulums.append(newPendulum)
     
     def update(self, dt):
-        for pendulumObj in self.pendulums:
-            pendulumObj.update(dt)
-        self.collisionCheck()
+        dt = min(dt, 1/30)
+        steps = 8
+        self.handleMouse()
+        for _ in range(steps):
+            for i, p in enumerate(self.pendulums):
+                if self.dragging and i == self.dragIndex:
+                    continue
+                p.update(dt / steps)
+            self.collisionCheck()
     
     def render(self):
         for pendulumObj in self.pendulums:
             pendulumObj.render()
+    
+    def startDrag(self):
+        self.dragging = True
+        
+    def endDrag(self):
+        self.dragging = False
+            
+    def handleMouse(self):
+        mouseButtons = pygame.mouse.get_pressed()
+        
+        if mouseButtons[0] != self.lastMouseState:
+            if mouseButtons[0]:
+                x, y = pygame.mouse.get_pos()
+                for i, pendulumObj in enumerate(self.pendulums):
+                    ballPos = pendulumObj.getBallPos()
+                    distance = math.dist(ballPos, (x, y))
+                    
+                    if distance <= self.radius:
+                        print("startDrag")     
+                        self.startDrag()
+                        self.dragIndex = i
+                        break
+            else:
+                print("endDrag")
+                self.endDrag()
+            
+        self.lastMouseState = mouseButtons[0]
+        if self.dragging:
+            pendulumObj = self.pendulums[self.dragIndex]
+            pendulumObj.angularVelocity = 0
+            x, y = pendulumObj.x, pendulumObj.y
+            mouseX, mouseY = pygame.mouse.get_pos()
+            
+            dx = x - mouseX
+            dy = y - mouseY
+            
+            angleRad = math.atan2(dx, -dy) #+ math.radians(90)
+            angleRad = min(max(angleRad, math.radians(-90)), math.radians(90))
+            
+            pendulumObj.angle = angleRad
             
     def collisionCheck(self):
         for _ in range(self.collisionIterations):
@@ -80,8 +131,8 @@ class newtonsCradle:
                 current = self.pendulums[i]
                 next = self.pendulums[i + 1]
 
-                currentPos = getPoint((current.x, current.y), math.degrees(current.angle) + 90, current.length)
-                nextPos = getPoint((next.x, next.y), math.degrees(next.angle) + 90, next.length)
+                currentPos = current.getBallPos()
+                nextPos = next.getBallPos()
 
                 distance = math.dist(currentPos, nextPos)
                 overlap = (self.radius * 2) - distance
@@ -89,10 +140,15 @@ class newtonsCradle:
                     continue
                 
                 correction = overlap / 2 / self.length
-                current.angle += correction
-                next.angle -= correction
+                if self.dragging and i != self.dragIndex:
+                    current.angle += correction
+                if self.dragging and (i + 1) != self.dragIndex:
+                    next.angle -= correction
                 
                 if current.angularVelocity >= next.angularVelocity:
+                    continue
+                
+                if self.dragging and i != self.dragIndex:
                     continue
                 
                 m1, m2 = current.mass, next.mass
@@ -123,11 +179,19 @@ class pendulum:
         self.friction = friction 
         self.gravity = length * (2 * math.pi / self.period) ** 2
     
+    def getBallPos(self):
+        return getPoint((self.x, self.y), math.degrees(self.angle) + 90, self.length)
+    
     def render(self):
-        ballPos = getPoint((self.x, self.y), math.degrees(self.angle) + 90, self.length)
-        pygame.draw.line(self.screen, ROPE_COLOR, (self.x, self.y), ballPos, self.ropeWidth)
+        ballPos = self.getBallPos()
+        pygame.draw.line(self.screen, BALL_OUTLINE, (self.x, self.y), ballPos, self.ropeWidth)
+        pygame.draw.line(self.screen, ROPE_COLOR, (self.x, self.y), ballPos, self.ropeWidth - 4)
+        
         pygame.draw.circle(self.screen, PIVOT_COLOR, (self.x, self.y), self.pivotRadius)
+        pygame.draw.circle(self.screen, BALL_OUTLINE, (self.x, self.y), self.pivotRadius, width=2)
+        
         pygame.draw.circle(self.screen, BALL_COLOR, ballPos, self.radius)
+        pygame.draw.circle(self.screen, BALL_OUTLINE, ballPos, self.radius, width=2)
         
     def update(self, dt):
         self.angularAcceleration = -(self.gravity / self.length) * math.sin(self.angle) - self.friction * self.angularVelocity
