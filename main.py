@@ -49,8 +49,12 @@ class newtonsCradle:
         self.pivotRadius = pivotRadius
         self.ropeWidth = ropeWidth
         
+        self.collisionIterations = 10
+        self.restitution = 1
+        
         self.initPendulums()
         self.pendulums[-1].angle = math.radians(-95)
+        self.pendulums[0].angle = math.radians(35)
     
     def initPendulums(self):
         for i in range(self.numPendulums):
@@ -62,29 +66,44 @@ class newtonsCradle:
     def update(self, dt):
         for pendulumObj in self.pendulums:
             pendulumObj.update(dt)
-        collisions = self.collisionCheck()
+        self.collisionCheck()
     
     def render(self):
         for pendulumObj in self.pendulums:
             pendulumObj.render()
             
     def collisionCheck(self):
-        collisions = []
-        for i in range(self.numPendulums - 1):
-            current = self.pendulums[i]
-            next = self.pendulums[i + 1]
-            
-            currentPos = getPoint((current.x, current.y), math.degrees(current.angle) + 90, current.length)
-            nextPos = getPoint((next.x, next.y), math.degrees(next.angle) + 90, next.length)
-            
-            if isCircleColliding(currentPos, self.radius, nextPos, self.radius):
+        for _ in range(self.collisionIterations):
+            for i in range(self.numPendulums - 1):
+                current = self.pendulums[i]
+                next = self.pendulums[i + 1]
+
+                currentPos = getPoint((current.x, current.y), math.degrees(current.angle) + 90, current.length)
+                nextPos = getPoint((next.x, next.y), math.degrees(next.angle) + 90, next.length)
+
                 distance = math.dist(currentPos, nextPos)
                 overlap = (self.radius * 2) - distance
-                collisions.append((i, i + 1, overlap))
-        return collisions
+                if overlap <= 0:
+                    continue
+                
+                correction = overlap / 2 / self.length
+                current.angle += correction
+                next.angle -= correction
+                
+                if current.angularVelocity >= next.angularVelocity:
+                    continue
+                
+                m1, m2 = current.mass, next.mass
+                w1, w2 = current.angularVelocity, next.angularVelocity
+                total = m1 + m2
+                momentum = m1 * w1 + m2 * w2
+                
+                current.angularVelocity = (momentum + m2 * self.restitution * (w2 - w1)) / total
+                next.angularVelocity = (momentum + m1 * self.restitution * (w1 - w2)) / total
 
 class pendulum:
-    def __init__(self, x, y, screen, radius = 20, length = 150, mass = 10, pivotRadius = 10, ropeWidth = 10, period = 1.5):
+    def __init__(self, x, y, screen, radius = 20, length = 150, mass = 10, pivotRadius = 10, 
+                 ropeWidth = 10, period = 1.5, friction = 0.005):
         self.x = x
         self.y = y
         self.screen = screen
@@ -99,7 +118,7 @@ class pendulum:
         self.angle = 0 #stored in radians
         self.angularVelocity = 0
         self.angularAcceleration = 0
-        self.friction = 0.1
+        self.friction = friction 
         self.gravity = length * (2 * math.pi / self.period) ** 2
     
     def render(self):
