@@ -1,15 +1,16 @@
 import pygame
 import sys
 import math
+import random
 
 WIDTH = 600
 HEIGHT = 400
 FPS = 120
 
-BG_COLOR = (40, 40, 40) #(237, 235, 240)
-PIVOT_COLOR = (122, 121, 115) #83, 81, 87
-ROPE_COLOR = (255,255,255) #175, 172, 181
-BALL_COLOR = (255,255,255) #49, 48, 51
+BG_COLOR = (40, 40, 40)
+PIVOT_COLOR = (122, 121, 115)
+ROPE_COLOR = (255,255,255)
+BALL_COLOR = (255,255,255) 
 BALL_OUTLINE = (0,0,0)
 
 pygame.init()
@@ -58,10 +59,6 @@ class newtonsCradle:
         self.dragIndex = 0
     
         self.initPendulums()
-        #self.pendulums[-1].angle = math.radians(-40)
-        #self.pendulums[0].angle = math.radians(35)
-        #self.pendulums[1].angle = math.radians(25)
-        #self.pendulums[2].angle = math.radians(15)
     
     def initPendulums(self):
         for i in range(self.numPendulums):
@@ -217,14 +214,19 @@ while running:
             elif event.key == pygame.K_r:
                 paused = False
                 testPendulum = newtonsCradle(WIDTH/2 - (ballRadius * numBalls * 2)/2 + ballRadius, HEIGHT * 0.3, screen, numPendulums = numBalls, radius = ballRadius)
+            elif event.key == pygame.K_SPACE:
+                randomPendulum = random.choice(testPendulum.pendulums)
+                randomPendulum.angularVelocity = math.radians(random.randint(-130, 130))
       
     screen.fill(BG_COLOR)
     
     testPendulum.render()
     if not paused:
         testPendulum.update(dt)
+        BG_COLOR = (40, 40, 40)
     
     if paused:
+        BG_COLOR = (99, 53, 59)
         pauseWidth = 10
         topPadding = 12
         pauseHeight = 30

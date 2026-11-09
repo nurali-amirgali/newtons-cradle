@@ -43,4 +43,5 @@ python main.py
 - ESC = quit
 - P = pause
 - R = reset
+- Space = randomize a random balls velocity
 - Drag the balls to play with the cradle
